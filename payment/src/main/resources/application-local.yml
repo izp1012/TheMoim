@@ -1,0 +1,53 @@
+IMAGE_BASE_URL: "/uploads"
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/moim
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password:
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always # 실행 시 테이블 자동 생성 (운영 환경에서는 별도 관리 권장)
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: QuartzScheduler
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+          threadPool:
+            threadCount: 5
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create
+    properties:
+      '[hibernate.default_batch_fetch_size]': 100
+      '[hibernate.format_sql]': true
+    show-sql: true
+  output:
+    ansi:
+      enabled: always
+#  security:
+#    oauth2:
+#      client:
+#        registration:
+#          google:
+#            client-id: 830719346682-3mpsdtr9tpka8nr95us4k2ok3r1bgpnp.apps.googleusercontent.com
+#            client-secret:
+#            scope: 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
+#              - email
+#              - profile
+logging:
+  level:
+    com.moim.payment: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE

@@ -115,7 +115,7 @@ public class SecurityConfig {
                         "/swagger-ui/**",    // Swagger UI
                         "/swagger-ui.html",
                         "/api/login/**",
-                        "/api/join/**",
+                        "/api/signup/**",
                         "/api/oauth2/**",
                         "/api/oauth2/login/google",
                         "/api/image/**").permitAll()

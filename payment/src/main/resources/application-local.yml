@@ -33,20 +33,11 @@ spring:
     properties:
       '[hibernate.default_batch_fetch_size]': 100
       '[hibernate.format_sql]': true
+      dialect: org.hibernate.dialect.MySQL8Dialect
     show-sql: true
   output:
     ansi:
       enabled: always
-#  security:
-#    oauth2:
-#      client:
-#        registration:
-#          google:
-#            client-id: 830719346682-3mpsdtr9tpka8nr95us4k2ok3r1bgpnp.apps.googleusercontent.com
-#            client-secret:
-#            scope: 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
-#              - email
-#              - profile
 logging:
   level:
     com.moim.payment: DEBUG

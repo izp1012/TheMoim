@@ -16,7 +16,7 @@ public class UsrMoimReq {
     private String imageUrl;
 
     @NotNull(message = "사용자 ID는 필수입니다.")
-    private String usrId;
+    private String userName;
 
     private boolean active;
 

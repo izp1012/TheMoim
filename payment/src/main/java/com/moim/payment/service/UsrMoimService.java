@@ -16,8 +16,8 @@ public class UsrMoimService {
     private final UsrMoimRepository usrMoimRepository;
     private final UsrRepository usrRepository;
 
-    public Usr findByUsrId(String usrId) {
-        Optional<Usr> usrOptional = usrRepository.findByUsrId(usrId);
+    public Usr findByUsrName(String usrName) {
+        Optional<Usr> usrOptional = usrRepository.findByUsrname(usrName);
 
         if(usrOptional.isEmpty()) {
             throw new RuntimeException("사용자를 찾을 수 없습니다");

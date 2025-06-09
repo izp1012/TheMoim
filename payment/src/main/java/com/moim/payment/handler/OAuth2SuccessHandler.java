@@ -76,7 +76,6 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .social(true)
                 .email(oAuth2User.getAttribute("email"))
                 .usrname(oAuth2User.getAttribute("username"))
-                .usrId(userId)
                 .role(UserRole.USER)
                 .build();
 

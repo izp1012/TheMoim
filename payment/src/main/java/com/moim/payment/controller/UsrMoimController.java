@@ -5,7 +5,6 @@ import com.moim.payment.domain.Usr.Usr;
 import com.moim.payment.domain.UsrMoim;
 import com.moim.payment.dto.UsrMoimReq;
 import com.moim.payment.service.UsrMoimService;
-import com.moim.payment.util.CustomUtil;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +23,18 @@ public class UsrMoimController {
 
     @PostMapping("/users")
     public ResponseEntity<Usr> addUser(@RequestBody UsrMoimReq usrMoimReq) {
-        System.out.println("User added: " + usrMoimReq.getUsrId());
-        Usr usr = usrMoimService.findByUsrId(usrMoimReq.getUsrId());
+        logger.debug("User added: " + usrMoimReq.getUserName());
+        Usr usr = usrMoimService.findByUsrName(usrMoimReq.getUserName());
 
         return ResponseEntity.ok(usr);
+    }
+
+    @PostMapping("/")
+    public ResponseEntity<UsrMoim> createMoim(@RequestBody UsrMoimReq usrMoimReq) {
+        logger.debug("Group added: " + usrMoimReq.getMoimName());
+        UsrMoim usrMoim = usrMoimService.createGroup(usrMoimReq.getMoimName());
+
+        return ResponseEntity.ok(usrMoim);
     }
 
     @PostMapping

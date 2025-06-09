@@ -23,7 +23,7 @@ public class TokenService {
 
     public TokenDTO createToken(LoginRespDto loginRespDto) {
         TokenDTO tokenDTO = tokenProvider.createTokenReqDto(loginRespDto.getUsrId(), loginRespDto.getRole());
-        Usr usr = usrRepository.findByUsrId(loginRespDto.getUsrId()).orElseThrow(()
+        Usr usr = usrRepository.findByUsrname(loginRespDto.getUsrname()).orElseThrow(()
                 -> new RuntimeException("Wrong Access (user does not exist)"));
 
         // 기존 리프레시 토큰이 있는지 확인
@@ -48,7 +48,7 @@ public class TokenService {
 
     public TokenDTO createToken(Usr usr) {
 
-        TokenDTO tokenDTO = tokenProvider.createTokenReqDto(usr.getUsrId(), usr.getRole());
+        TokenDTO tokenDTO = tokenProvider.createTokenReqDto(usr.getUsrname(), usr.getRole());
 
         // 기존 리프레시 토큰이 있는지 확인
         Optional<RefreshToken> existingRefreshToken = refreshTokenRepository.findByUsr(usr);
@@ -77,15 +77,15 @@ public class TokenService {
 
         Authentication authentication = tokenProvider.getAuthentication(tokenDTO.getAccessToken());
 
-        RefreshToken refreshToken = refreshTokenRepository.findByUsr(usrRepository.findByUsrId(authentication.getName()).get())
+        RefreshToken refreshToken = refreshTokenRepository.findByUsr(usrRepository.findByUsrname(authentication.getName()).get())
                 .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
 
         if (!refreshToken.getToken().equals(tokenDTO.getRefreshToken())) {
             throw new RuntimeException("Refresh Token이 일치하지 않습니다.");
         }
 
-        Usr user = usrRepository.findByUsrId(refreshToken.getUsr().getUsrId()).orElseThrow(() -> new RuntimeException("존재하지 않는 계정입니다."));
-        TokenDTO tokenDto = tokenProvider.createTokenReqDto(user.getUsrId(), user.getRole());
+        Usr user = usrRepository.findByUsrname(refreshToken.getUsr().getUsrname()).orElseThrow(() -> new RuntimeException("존재하지 않는 계정입니다."));
+        TokenDTO tokenDto = tokenProvider.createTokenReqDto(user.getUsrname(), user.getRole());
 
         RefreshToken newRefreshToken = refreshToken.updateValue(tokenDto.getRefreshToken());
         refreshTokenRepository.save(newRefreshToken);

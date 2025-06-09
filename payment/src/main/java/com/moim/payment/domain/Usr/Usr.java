@@ -20,26 +20,23 @@ import java.time.LocalDateTime;
 @DynamicUpdate
 public class Usr { //extends 시간설정 (상속)
     @Id
-    @Column(updatable = false, unique = true)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false, length = 60)
-    private String usrId;
-
-    @Column(nullable = false, length = 60) //패스워드 인코딩(BCrypt)
-    private String password;
 
     @Column(nullable = false, length = 21, unique = true) //id
     private String usrname;
+
+    @Column(nullable = false, length = 60) //패스워드 인코딩(BCrypt)
+    private String password;
 
     private String nickname;
 
     private LocalDate birth;
 
-    @Column(nullable = false, length = 30)
+    @Column(length = 30)
     private String email;
 
-    @Column(nullable = false)
+    @Column
     @Enumerated(EnumType.STRING)
     private UserRole role; //USER, ADMIN
 
@@ -63,8 +60,7 @@ public class Usr { //extends 시간설정 (상속)
     private LocalDateTime updatedAt;
 
     @Builder
-    public Usr(String usrId, String usrname, String password, String email, UserRole role, boolean social, Provider provider, LocalDateTime createdAt){
-        this.usrId = usrId;
+    public Usr(String usrname, String password, String email, UserRole role, boolean social, Provider provider, LocalDateTime createdAt){
         this.usrname = usrname;
         this.password = password;
         this.email = email;

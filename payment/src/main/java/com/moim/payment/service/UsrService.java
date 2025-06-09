@@ -35,7 +35,7 @@ public class UsrService implements UserDetailsService {
     @Transactional //트랜잭션이 메서드 시작할때, 시작되고, 종료될 때 함께 종료
     public JoinRespDto join(JoinReqDto joinReqDto) {
         // 1. 동일 유저네임 존재 검사
-        Optional<Usr> userOptional = usrRepository.findByUsrId(joinReqDto.getUserId());
+        Optional<Usr> userOptional = usrRepository.findByUsrname(joinReqDto.getUsrname());
         if (userOptional.isPresent()) {
             //Username 중복
             throw new RuntimeException("동일한 UserID 가 존재합니다.");
@@ -50,7 +50,7 @@ public class UsrService implements UserDetailsService {
     }
 
     public TokenDTO login(LoginReqDto loginReqDto, HttpServletResponse response) {
-        Optional<Usr> usrOptional = usrRepository.findByUsrId(loginReqDto.getUserId());
+        Optional<Usr> usrOptional = usrRepository.findByUsrname(loginReqDto.getUsrname());
 
         if(usrOptional.isEmpty()) {
             throw new RuntimeException("사용자를 찾을 수 없습니다");
@@ -83,36 +83,36 @@ public class UsrService implements UserDetailsService {
 
     /**
      * ID로 사용자 조회
-     * @param usrId 사용자 ID
+     * @param usrName 사용자 ID
      * @return 사용자 엔티티
      */
-    public UsrRespDto findUsrById(String usrId) {
-        Usr user = usrRepository.findByUsrId(usrId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", usrId));
+    public UsrRespDto findUsrById(String usrName) {
+        Usr user = usrRepository.findByUsrname(usrName)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "usrName", usrName));
 
         return UsrRespDto.from(user);
     }
 
-    public Usr findUserEntityById(String userId) {
-        return usrRepository.findByUsrId(userId)
+    public Usr findUserEntityById(String usrName) {
+        return usrRepository.findByUsrname(usrName)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 
     public Usr getCurrentUserDetails() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
-            String username = authentication.getName();
-            return findUserbyUsername(username);
+            String usrName = authentication.getName();
+            return findUserbyUsername(usrName);
         }
 
         return null;
     }
 
     @Override
-    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
-        log.debug("사용자 로드 시도 : "+userId);
-        Usr userPS =usrRepository.findByUsrId(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("userId: " + userId + "를 데이터베이스에서 찾을 수 없습니다."));
+    public UserDetails loadUserByUsername(String usrName) throws UsernameNotFoundException {
+        log.debug("사용자 로드 시도 : "+usrName);
+        Usr userPS =usrRepository.findByUsrname(usrName)
+                .orElseThrow(() -> new UsernameNotFoundException("userName: " + usrName + "를 데이터베이스에서 찾을 수 없습니다."));
         return new LoginUsr(userPS);
     }
 

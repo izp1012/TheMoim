@@ -26,14 +26,14 @@ import java.time.LocalDateTime;
 public class UsrController {
     private final UsrService usrService;
 
-    @PostMapping("/auth/join")
+    @PostMapping("/signup")
     public ResponseEntity<?> join(@RequestBody @Valid JoinReqDto joinReqDto){
         JoinRespDto joinRespDto = usrService.join(joinReqDto);
         return new ResponseEntity<>(new ResponseDto<>(1, "회원가입 성공", CustomDateUtil.toStringFormat(LocalDateTime.now()), joinRespDto), HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login2(HttpServletResponse response, @RequestBody @Valid LoginReqDto loginReqDto){
+    public ResponseEntity<?> login(HttpServletResponse response, @RequestBody @Valid LoginReqDto loginReqDto){
         TokenDTO tokenDTO = usrService.login(loginReqDto, response);
 
         ResponseCookie responseCookie = ResponseCookie
@@ -56,7 +56,7 @@ public class UsrController {
 
     @GetMapping("/auth/get-current-member")
     public UsrRespDto getCurrentMember(Authentication authentication){
-        String userId = ((LoginUsr) authentication.getPrincipal()).getUsr().getUsrId();
+        String userId = ((LoginUsr) authentication.getPrincipal()).getUsr().getUsrname();
         log.debug("authentication.getName() : " + userId);
         return usrService.findUsrById(userId);
     }

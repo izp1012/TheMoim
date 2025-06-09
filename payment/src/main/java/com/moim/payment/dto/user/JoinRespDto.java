@@ -9,12 +9,10 @@ import lombok.ToString;
 @Setter
 @ToString
 public class JoinRespDto {
-    private String userId;
     private String username;
     private String email;
 
     public JoinRespDto(Usr usr) {
-        this.userId = usr.getUsrId();
         this.username = usr.getUsrname();
         this.email = usr.getEmail();
     }

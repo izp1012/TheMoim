@@ -12,10 +12,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 @AllArgsConstructor
 public class LoginReqDto {
 
-    private String userId;
+    private String usrname;
     private String password;
 
     public UsernamePasswordAuthenticationToken toAuthentication() {
-        return new UsernamePasswordAuthenticationToken(userId, password);
+        return new UsernamePasswordAuthenticationToken(usrname, password);
     }
 }

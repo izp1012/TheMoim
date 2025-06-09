@@ -18,17 +18,14 @@ public class LoginRespDto {
     private UserRole role;
 
     public LoginRespDto(Usr usr) {
-        this.usrId = usr.getUsrId();
         this.usrname = usr.getUsrname();
         this.email = usr.getEmail();
         this.loginAt = CustomDateUtil.toStringFormat(usr.getCreatedAt());
-//        this.jwtToken = jwtToken;
         this.social = usr.isSocial();
         this.role = usr.getRole();
     }
 
     public LoginRespDto(Usr usr, String jwtToken) {
-        this.usrId = usr.getUsrId();
         this.usrname = usr.getUsrname();
         this.email = usr.getEmail();
         this.loginAt = CustomDateUtil.toStringFormat(usr.getCreatedAt());

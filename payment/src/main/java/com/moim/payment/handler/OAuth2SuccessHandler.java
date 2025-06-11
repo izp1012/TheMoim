@@ -3,8 +3,8 @@ package com.moim.payment.handler;
 import com.moim.payment.domain.Usr.Provider;
 import com.moim.payment.domain.Usr.UserRole;
 import com.moim.payment.domain.Usr.Usr;
-import com.moim.payment.dto.user.LoginRespDto;
-import com.moim.payment.dto.user.TokenDTO;
+import com.moim.payment.dto.usr.LoginRespDto;
+import com.moim.payment.dto.usr.TokenDTO;
 import com.moim.payment.repository.UsrRepository;
 import com.moim.payment.service.TokenService;
 import com.moim.payment.util.CookieUtil;
@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -35,7 +34,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws ServletException, IOException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String targetUrl = determineTargetUrl(request, response, authentication);
 
@@ -67,9 +66,6 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
 
     protected LoginRespDto saveNewUser(OAuth2User oAuth2User) {
-
-        //userId를 나중에 변경해야함
-        String userId = oAuth2User.getAttribute("usrId").toString().concat(oAuth2User.getAttribute("provider").toString());
 
         Usr usr = Usr.builder()
                 .provider(Provider.of(oAuth2User.getAttribute("provider").toString()))

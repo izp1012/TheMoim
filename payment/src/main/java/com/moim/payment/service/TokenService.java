@@ -22,7 +22,7 @@ public class TokenService {
     private final UsrRepository usrRepository;
 
     public TokenDTO createToken(LoginRespDto loginRespDto) {
-        TokenDTO tokenDTO = tokenProvider.createTokenReqDto(loginRespDto.getUsrId(), loginRespDto.getRole());
+        TokenDTO tokenDTO = tokenProvider.createTokenReqDto(loginRespDto.getUsrname(), loginRespDto.getRole());
         Usr usr = usrRepository.findByUsrname(loginRespDto.getUsrname()).orElseThrow(()
                 -> new RuntimeException("Wrong Access (user does not exist)"));
 
@@ -84,8 +84,8 @@ public class TokenService {
             throw new RuntimeException("Refresh Token이 일치하지 않습니다.");
         }
 
-        Usr user = usrRepository.findByUsrname(refreshToken.getUsr().getUsrname()).orElseThrow(() -> new RuntimeException("존재하지 않는 계정입니다."));
-        TokenDTO tokenDto = tokenProvider.createTokenReqDto(user.getUsrname(), user.getRole());
+        Usr usr = usrRepository.findByUsrname(refreshToken.getUsr().getUsrname()).orElseThrow(() -> new RuntimeException("존재하지 않는 계정입니다."));
+        TokenDTO tokenDto = tokenProvider.createTokenReqDto(usr.getUsrname(), usr.getRole());
 
         RefreshToken newRefreshToken = refreshToken.updateValue(tokenDto.getRefreshToken());
         refreshTokenRepository.save(newRefreshToken);

@@ -33,7 +33,7 @@ public class Usr { //extends 시간설정 (상속)
 
     private LocalDate birth;
 
-    @Column(length = 30)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column
@@ -52,7 +52,7 @@ public class Usr { //extends 시간설정 (상속)
     private String phoneNo;
 
     @CreatedDate //Insert
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate //Insert, Update

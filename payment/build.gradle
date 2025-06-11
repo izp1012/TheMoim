@@ -38,6 +38,9 @@ dependencies {
 	// OAuth2 Client
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
+	// Spring Boot Mail (이메일 발송)
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5',
 			'io.jsonwebtoken:jjwt-jackson:0.12.5'
 

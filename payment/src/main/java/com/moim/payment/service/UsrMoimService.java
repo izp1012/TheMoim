@@ -32,11 +32,8 @@ public class UsrMoimService {
 
         return usr;
     }
-    public UsrMoim createGroup(String name) {
-        UsrMoim group = UsrMoim.builder().moimName(name).build();
-        return usrMoimRepository.save(group);
-    }
+
     public List<UsrMoim> getList(String name) {
-        return usrMoimRepository.getAllByMoimName(name);
+        return usrMoimRepository.getAllByMoim_Moimname(name);
     }
 }

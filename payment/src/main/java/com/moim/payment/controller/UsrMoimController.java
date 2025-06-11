@@ -29,19 +29,6 @@ public class UsrMoimController {
         return ResponseEntity.ok(usr);
     }
 
-    @PostMapping("/")
-    public ResponseEntity<UsrMoim> createMoim(@RequestBody UsrMoimReq usrMoimReq) {
-        logger.debug("Group added: " + usrMoimReq.getMoimName());
-        UsrMoim usrMoim = usrMoimService.createGroup(usrMoimReq.getMoimName());
-
-        return ResponseEntity.ok(usrMoim);
-    }
-
-    @PostMapping
-    public ResponseEntity<UsrMoim> create(@RequestParam String name) {
-        return ResponseEntity.ok(usrMoimService.createGroup(name));
-    }
-
     @GetMapping
     public ResponseEntity<List<UsrMoim>> getList(@RequestParam String name) {
         return ResponseEntity.ok(usrMoimService.getList(name));

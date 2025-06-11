@@ -1,4 +1,4 @@
-package com.moim.payment.dto.user;
+package com.moim.payment.dto.usr;
 
 import com.moim.payment.domain.Usr.Usr;
 import jakarta.validation.constraints.NotEmpty;

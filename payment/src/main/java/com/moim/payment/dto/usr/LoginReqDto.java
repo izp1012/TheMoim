@@ -1,4 +1,4 @@
-package com.moim.payment.dto.user;
+package com.moim.payment.dto.usr;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

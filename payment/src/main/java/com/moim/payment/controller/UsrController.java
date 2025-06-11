@@ -2,7 +2,7 @@ package com.moim.payment.controller;
 
 import com.moim.payment.config.auth.LoginUsr;
 import com.moim.payment.dto.ResponseDto;
-import com.moim.payment.dto.user.*;
+import com.moim.payment.dto.usr.*;
 import com.moim.payment.service.UsrService;
 import com.moim.payment.util.CustomDateUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,14 +27,14 @@ public class UsrController {
     private final UsrService usrService;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> join(@RequestBody @Valid JoinReqDto joinReqDto){
-        JoinRespDto joinRespDto = usrService.join(joinReqDto);
-        return new ResponseEntity<>(new ResponseDto<>(1, "회원가입 성공", CustomDateUtil.toStringFormat(LocalDateTime.now()), joinRespDto), HttpStatus.CREATED);
+    public ResponseEntity<?> join(@RequestBody @Valid SignUpReqDto signUpReqDto){
+        SignUpRespDto signUpRespDto = usrService.signup(signUpReqDto);
+        return new ResponseEntity<>(new ResponseDto<>(1, "회원가입 성공", CustomDateUtil.toStringFormat(LocalDateTime.now()), signUpRespDto), HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(HttpServletResponse response, @RequestBody @Valid LoginReqDto loginReqDto){
-        TokenDTO tokenDTO = usrService.login(loginReqDto, response);
+        TokenDTO tokenDTO = usrService.login(loginReqDto);
 
         ResponseCookie responseCookie = ResponseCookie
                 .from("refresh_token", tokenDTO.getRefreshToken())

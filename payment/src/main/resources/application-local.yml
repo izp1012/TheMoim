@@ -12,6 +12,18 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: youremail@gmail.com
+    password: yourpassword
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
   quartz:
     job-store-type: jdbc
     jdbc:
@@ -42,3 +54,9 @@ logging:
   level:
     com.moim.payment: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
+kftc:
+  client-id:
+  client-secret :
+  token-endpoint: https://testapi.openbanking.or.kr/oauth/2.0/token
+  user-info-endpoint : https://testapi.openbanking.or.kr/v2.0/account/balance/fin_num
+  account-api-endpoint : https://testapi.openbanking.or.kr/v2.0/account/balance/fin_num

@@ -3,6 +3,7 @@ package com.moim.payment.dto.usr;
 import com.moim.payment.domain.Usr.UserRole;
 import com.moim.payment.domain.Usr.Usr;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter

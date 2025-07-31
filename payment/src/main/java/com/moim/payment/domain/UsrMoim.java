@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-// 복합 키를 사용하지 않고 단순히 PK로 UsrMoim ID를 사용하는 방식
 public class UsrMoim {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,10 +36,15 @@ public class UsrMoim {
     @Column(updatable = false)
     private LocalDateTime joinedAt;
 
+    @CreatedDate
+    @Column
+    private boolean bActive;
+
     @Builder
-    public UsrMoim(Usr usr, Moim moim, UsrMoimRole role) {
+    public UsrMoim(Usr usr, Moim moim, boolean bActive, UsrMoimRole role) {
         this.usr = usr;
         this.moim = moim;
+        this.bActive = bActive;
         this.role = role;
     }
 

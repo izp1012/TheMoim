@@ -1,6 +1,7 @@
 package com.moim.payment.controller;
 
 import com.moim.payment.config.auth.LoginUsr;
+import com.moim.payment.domain.Usr.Usr;
 import com.moim.payment.dto.ResponseDto;
 import com.moim.payment.dto.usr.*;
 import com.moim.payment.service.UsrService;
@@ -36,6 +37,9 @@ public class UsrController {
     public ResponseEntity<?> login(HttpServletResponse response, @RequestBody @Valid LoginReqDto loginReqDto){
         TokenDTO tokenDTO = usrService.login(loginReqDto);
 
+        Usr usr = usrService.findUserbyUsername(loginReqDto.getUsrname());
+        LoginRespDto loginRespDto = new LoginRespDto(usr);
+
         ResponseCookie responseCookie = ResponseCookie
                 .from("refresh_token", tokenDTO.getRefreshToken())
                 .httpOnly(true)
@@ -46,12 +50,14 @@ public class UsrController {
                 .build();
 
         response.addHeader("Set-Cookie", responseCookie.toString()); // Set-Cookie 헤더에 쿠키 추가
-
         TokenRespDto tokenResponseDTO = TokenRespDto.builder()
                 .isNewMember(false)
                 .accessToken(tokenDTO.getAccessToken())
                 .build();
-        return new ResponseEntity<>(new ResponseDto<>(1, "로그인 성공", CustomDateUtil.toStringFormat(LocalDateTime.now()), tokenResponseDTO), HttpStatus.OK);
+
+        loginRespDto.setJwtToken(tokenDTO.getAccessToken());
+
+        return new ResponseEntity<>(new ResponseDto<>(1, "로그인 성공", CustomDateUtil.toStringFormat(LocalDateTime.now()), loginRespDto), HttpStatus.OK);
     }
 
     @GetMapping("/auth/get-current-member")

@@ -1,5 +1,6 @@
 package com.moim.payment.dto;
 
+import com.moim.payment.domain.Moim;
 import com.moim.payment.domain.Usr.Usr;
 import com.moim.payment.domain.UsrMoim;
 import jakarta.validation.constraints.NotNull;
@@ -20,16 +21,13 @@ public class UsrMoimReq {
 
     private boolean active;
 
-    private boolean hidden;
+    private UsrMoim.UsrMoimRole role;
 
-    public static UsrMoim toEntity(UsrMoimReq usrMoimReq, Usr usr, String imageUrl) {
+    public static UsrMoim toEntity(UsrMoimReq usrMoimReq, Moim moim, Usr usr, String imageUrl) {
         return UsrMoim.builder()
-                .moimName(usrMoimReq.getMoimName())
-                .moimDesp(usrMoimReq.getMoimDesp())
-                .imageUrl(imageUrl)
-                .createBy(usr)
-                .active(usrMoimReq.isActive())
-                .hidden(usrMoimReq.isHidden())
+                .moim(moim)
+                .bActive(usrMoimReq.isActive())
+                .role(usrMoimReq.getRole())
                 .build();
     }
 }

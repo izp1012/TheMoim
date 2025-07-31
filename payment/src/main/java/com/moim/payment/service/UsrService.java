@@ -34,7 +34,7 @@ public class UsrService implements UserDetailsService {
     @Transactional //트랜잭션이 메서드 시작할때, 시작되고, 종료될 때 함께 종료
     public SignUpRespDto signup(SignUpReqDto signUpReqDto) {
         // 1. 동일 유저네임 존재 검사
-        if (usrRepository.existsByUsername(signUpReqDto.getUsrname())) {
+        if (usrRepository.existsByUsrname(signUpReqDto.getUsrname())) {
             throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
         }
         if (usrRepository.existsByEmail(signUpReqDto.getEmail())) {

@@ -118,7 +118,8 @@ public class SecurityConfig {
                         "/api/signup/**",
                         "/api/oauth2/**",
                         "/api/oauth2/login/google",
-                        "/api/image/**").permitAll()
+                        "/api/image/**",
+                        "/api/kftc/**").permitAll()
                 .requestMatchers("/api/auth/**").authenticated());
 
         return http.build();

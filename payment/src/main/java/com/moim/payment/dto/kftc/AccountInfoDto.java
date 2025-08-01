@@ -16,6 +16,7 @@ public class AccountInfoDto {
     private String accountNumber;
     private String balance;
     private String ownerName;
+    private String fintechUseNum;
     private List<TransactionDTO> transactions;
     private List<AccountSummary> accountSummaries;
 

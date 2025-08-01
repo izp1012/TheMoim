@@ -41,7 +41,10 @@ dependencies {
 	// Spring Boot Mail (이메일 발송)
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation("io.projectreactor:reactor-core")
+
+	// Spring WebFlux Starter (WebClient 사용)
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
 
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5',
 			'io.jsonwebtoken:jjwt-jackson:0.12.5'

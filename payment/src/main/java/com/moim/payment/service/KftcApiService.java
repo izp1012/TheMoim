@@ -5,11 +5,13 @@ import com.moim.payment.dto.kftc.KftcAccountInfoResp;
 import com.moim.payment.dto.kftc.KftcTokenResp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.*;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -19,7 +21,9 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,8 +42,8 @@ public class KftcApiService {
     @Value("${kftc.user-info-endpoint}")
     private String userInfoEndpoint;
 
-    @Value("${kftc.account-api-endpoint}")
-    private String accountApiEndpoint;
+    @Value("${kftc.balance-inquiry-endpoint}")
+    private String balanceInquiryEndpoint;
 
     private final WebClient webClient;
 
@@ -58,7 +62,7 @@ public class KftcApiService {
         log.info("Access Token 교환 요청 시작: code={}, redirectUri={}", code, redirectUri);
 
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("grant_type", "authorization_code");
+         formData.add("grant_type", "authorization_code");
         formData.add("client_id", clientId);
         formData.add("client_secret", clientSecret);
         formData.add("redirect_uri", redirectUri);
@@ -70,15 +74,15 @@ public class KftcApiService {
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .bodyValue(formData)
                     .retrieve()
-                    .onStatus(
-                            status -> status.is4xxClientError() || status.is5xxServerError(),
-                            clientResponse -> clientResponse.bodyToMono(String.class)
-                                    .flatMap(errorBody -> {
-                                        log.error("KFTC Access Token 교환 실패: HTTP Status={}, Error Body={}",
-                                                clientResponse.statusCode(), errorBody);
-                                        return Mono.error(new RuntimeException("KFTC Access Token 교환 실패: " + errorBody));
-                                    })
-                    )
+//                    .onStatus(
+//                            status -> status.is4xxClientError() || status.is5xxServerError(),
+//                            clientResponse -> clientResponse.bodyToMono(String.class)
+//                                    .flatMap(errorBody -> {
+//                                        log.error("KFTC Access Token 교환 실패: HTTP Status={}, Error Body={}",
+//                                                clientResponse.statusCode(), errorBody);
+//                                        return Mono.error(new RuntimeException("KFTC Access Token 교환 실패: " + errorBody));
+//                                    })
+//                    )
                     .bodyToMono(KftcTokenResp.class)
                     .timeout(Duration.ofSeconds(30))
                     .block();
@@ -128,17 +132,77 @@ public class KftcApiService {
     public String getAccountBalance(String accessToken, String fintechUseNum) {
         log.info("계좌 잔액 조회 요청: fintechUseNum={}", fintechUseNum);
 
-        String bankTranId = generateBankTranId("T991");
+        String bankTranId = generateBankTranId("T991");  // 타입을 T991로 고정
         String tranDtime = getCurrentTimestamp();
 
+        // 요청 파라미터 설정
+        Map<String, String> params = new HashMap<>();
+        params.put("bank_tran_id", bankTranId);
+        params.put("fintech_use_num", fintechUseNum);
+        params.put("tran_dtime", tranDtime);
+
+        // 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(accessToken);
+
+        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(params, headers);
+
         try {
-            // 실제 금융결재원 잔액 조회 API 호출 로직
-            // 현재는 테스트용 가상 데이터 반환
-            return "1234567";
+            log.debug("잔액 조회 API 호출: URL={}, params={}", balanceInquiryEndpoint, params);
+
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<Map<String, Object>> responseEntity = restTemplate.exchange(
+                    balanceInquiryEndpoint,
+                    HttpMethod.POST,
+                    requestEntity,
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
+
+            Map<String, Object> responseBody = responseEntity.getBody();
+
+            if (responseBody == null) {
+                throw new RuntimeException("잔액 조회 응답이 비어있습니다.");
+            }
+
+            // 응답 상태 확인
+            String rspCode = (String) responseBody.get("rsp_code");
+            if (!"A0000".equals(rspCode)) {
+                String rspMessage = (String) responseBody.get("rsp_message");
+                log.error("잔액 조회 실패: code={}, message={}", rspCode, rspMessage);
+                throw new RuntimeException("잔액 조회 실패: " + rspMessage);
+            }
+
+            // 잔액 추출
+            Map<String, Object> resList = (Map<String, Object>) responseBody.get("res_list");
+            if (resList != null) {
+                Object balance = resList.get("balance_amt");
+                String balanceStr = balance != null ? balance.toString() : "0";
+
+                log.info("잔액 조회 성공: balance={}", balanceStr);
+                return balanceStr;
+            }
+
+            log.warn("응답에서 잔액 정보를 찾을 수 없습니다.");
+            return "0";
+
+        } catch (HttpClientErrorException e) {
+            log.error("잔액 조회 클라이언트 오류: status={}, body={}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("잔액 조회 실패 (클라이언트 오류): " + e.getResponseBodyAsString());
+
+        } catch (HttpServerErrorException e) {
+            log.error("잔액 조회 서버 오류: status={}, body={}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("잔액 조회 실패 (서버 오류): " + e.getResponseBodyAsString());
+
+        } catch (ResourceAccessException e) {
+            log.error("잔액 조회 네트워크 오류: {}", e.getMessage(), e);
+            throw new RuntimeException("잔액 조회 연결 오류: " + e.getMessage());
 
         } catch (Exception e) {
-            log.error("잔액 조회 실패: {}", e.getMessage(), e);
-            return "0";
+            log.error("잔액 조회 중 예상치 못한 오류: {}", e.getMessage(), e);
+            throw new RuntimeException("잔액 조회 실패: " + e.getMessage());
         }
     }
 
@@ -198,7 +262,7 @@ public class KftcApiService {
                     .accountNumber(primaryAccount.getAccountNumber())
                     .ownerName(primaryAccount.getOwnerName())
                     .balance(balance)
-                    .ownerName(primaryAccount.getFintechUseNum())
+                    .fintechUseNum(primaryAccount.getFintechUseNum())
                     .transactions(transactions)
                     .build();
 

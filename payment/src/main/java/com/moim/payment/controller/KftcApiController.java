@@ -1,9 +1,8 @@
 package com.moim.payment.controller;
 
-import com.moim.payment.dto.kftc.AccountInfoDto;
-import com.moim.payment.dto.kftc.KftcApiReq;
-import com.moim.payment.dto.kftc.KftcTokenResp;
+import com.moim.payment.dto.kftc.*;
 import com.moim.payment.service.KftcApiService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -195,6 +194,68 @@ public class KftcApiController {
         response.put("status", "OK");
         response.put("message", "KFTC API Controller is running");
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 출금이체 (송금)
+     */
+    @PostMapping("/transfer/withdraw")
+    public ResponseEntity<?> withdrawTransfer(@RequestBody TransferReqDto request,
+                                              HttpServletRequest httpRequest) {
+        log.info("출금이체 요청: fintechUseNum={}, amount={}",
+                request.getFintechUseNum(), request.getTranAmt());
+
+        try {
+            // JWT 토큰에서 액세스 토큰 추출
+            String accessToken = extractAccessTokenFromRequest(httpRequest);
+
+            TransferRespDto response = kftcApiService.processWithdrawTransfer(accessToken, request);
+
+            log.info("출금이체 성공: bankTranId={}", response.getBankTranId());
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("출금이체 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("WITHDRAW_TRANSFER_ERROR", "출금이체 처리 실패: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 입금이체 (수취)
+     */
+    @PostMapping("/transfer/deposit")
+    public ResponseEntity<?> depositTransfer(@RequestBody TransferReqDto request,
+                                             HttpServletRequest httpRequest) {
+        log.info("입금이체 요청: fintechUseNum={}, amount={}",
+                request.getFintechUseNum(), request.getTranAmt());
+
+        try {
+            // JWT 토큰에서 액세스 토큰 추출
+            String accessToken = extractAccessTokenFromRequest(httpRequest);
+
+            TransferRespDto response = kftcApiService.processDepositTransfer(accessToken, request);
+
+            log.info("입금이체 성공: bankTranId={}", response.getBankTranId());
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("입금이체 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("DEPOSIT_TRANSFER_ERROR", "입금이체 처리 실패: " + e.getMessage()));
+        }
+    }
+
+    private String extractAccessTokenFromRequest(HttpServletRequest request) {
+        // JWT 토큰에서 KFTC 액세스 토큰을 추출하는 로직
+        // 실제 구현은 토큰 저장 방식에 따라 달라집니다
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            // JWT 토큰을 파싱하여 KFTC 액세스 토큰 추출
+            // 또는 세션/데이터베이스에서 조회
+            return "extracted_kftc_access_token";
+        }
+        throw new RuntimeException("액세스 토큰을 찾을 수 없습니다.");
     }
 
     // 유틸리티 메서드들

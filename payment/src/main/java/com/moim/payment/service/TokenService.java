@@ -22,44 +22,25 @@ public class TokenService {
     private final UsrRepository usrRepository;
 
     public TokenDTO createToken(LoginRespDto loginRespDto) {
-        TokenDTO tokenDTO = tokenProvider.createTokenReqDto(loginRespDto.getUsrname(), loginRespDto.getRole());
-        Usr usr = usrRepository.findByUsrname(loginRespDto.getUsrname()).orElseThrow(()
-                -> new RuntimeException("Wrong Access (user does not exist)"));
-
-        // 기존 리프레시 토큰이 있는지 확인
-        Optional<RefreshToken> existingRefreshToken = refreshTokenRepository.findByUsr(usr);
-
-        if (existingRefreshToken.isPresent()) {
-            // 기존 토큰이 있다면 업데이트
-            RefreshToken refreshToken = existingRefreshToken.get();
-            refreshToken.updateValue(tokenDTO.getRefreshToken());
-            refreshTokenRepository.save(refreshToken);
-        } else {
-            // 기존 토큰이 없다면 새로 생성
-            RefreshToken refreshToken = RefreshToken.builder()
-                    .usr(usr)
-                    .token(tokenDTO.getRefreshToken())
-                    .build();
-            refreshTokenRepository.save(refreshToken);
-        }
-
-        return tokenDTO;
+        Usr usr = usrRepository.findByUsrname(loginRespDto.getUsrname())
+                .orElseThrow(() -> new RuntimeException("Wrong Access (user does not exist)"));
+        return createAndSaveToken(usr);
     }
 
     public TokenDTO createToken(Usr usr) {
+        return createAndSaveToken(usr);
+    }
 
+    private TokenDTO createAndSaveToken(Usr usr) {
         TokenDTO tokenDTO = tokenProvider.createTokenReqDto(usr.getUsrname(), usr.getRole());
 
-        // 기존 리프레시 토큰이 있는지 확인
         Optional<RefreshToken> existingRefreshToken = refreshTokenRepository.findByUsr(usr);
 
         if (existingRefreshToken.isPresent()) {
-            // 기존 토큰이 있다면 업데이트
             RefreshToken refreshToken = existingRefreshToken.get();
             refreshToken.updateValue(tokenDTO.getRefreshToken());
             refreshTokenRepository.save(refreshToken);
         } else {
-            // 기존 토큰이 없다면 새로 생성
             RefreshToken refreshToken = RefreshToken.builder()
                     .usr(usr)
                     .token(tokenDTO.getRefreshToken())

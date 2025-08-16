@@ -57,7 +57,7 @@ public class JwtTokenProvider {
         String accessToken = Jwts.builder()
                 .subject(subject)
                 .claim("roles", role.name())
-                .expiration(Date.from(refreshTokenExpirationDate))
+                .expiration(Date.from(accessTokenExpirationDate))
                 .signWith(key)
                 .compact();
         log.debug("디버그: Access Token 생성됨 (Subject: {}, Role: {}, Expires: {})", subject, role.name(), accessTokenExpirationDate);

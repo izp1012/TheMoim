@@ -38,6 +38,16 @@ spring:
             driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
           threadPool:
             threadCount: 5
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id:
+            client-secret:
+            scope:
+              - profile
+              - email
   jpa:
     open-in-view: false
     hibernate:

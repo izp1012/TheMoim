@@ -2,14 +2,13 @@ package com.moim.payment.config.auth;
 
 import com.moim.payment.handler.JwtAccessDeniedHandler;
 import com.moim.payment.handler.JwtAuthenticationEntryPoint;
+import com.moim.payment.handler.OAuth2SuccessHandler;
+import com.moim.payment.service.CustomOAuth2UserService;
 import com.moim.payment.service.TokenService;
-import com.moim.payment.util.CustomUtil;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,7 +18,6 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -27,13 +25,15 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
-    private final AuthenticationConfiguration authenticationConfiguration;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final CustomOAuth2UserService oAuth2UserService;
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         log.debug("디버그: BCryptPasswordEncoder 빈 등록됨");
@@ -41,36 +41,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager() throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    //JWT 필터 등록이 필요함
-    public static class CustomSecurityFilterManager extends AbstractHttpConfigurer<CustomSecurityFilterManager, HttpSecurity> {
-        private final JwtTokenProvider jwtTokenProvider;
-        private final TokenService tokenService;
-
-        public CustomSecurityFilterManager(JwtTokenProvider jwtTokenProvider, TokenService tokenService) {
-            this.jwtTokenProvider = jwtTokenProvider;
-            this.tokenService = tokenService;
-        }
-
-        @Override
-        public void configure(HttpSecurity builder) throws Exception {
-            AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
-
-            builder.addFilterBefore(new JwtRequestFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
-            super.configure(builder);
-        }
-
-        public HttpSecurity build() {
-            return getBuilder();
-        }
     }
 
     // JWT 서버 생성 예정. Session 미사용
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, TokenService tokenService) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, TokenService tokenService, AuthenticationManager authenticationManager) throws Exception {
 
         log.debug("디버그: filterChain 빈 등록됨");
 
@@ -91,22 +68,31 @@ public class SecurityConfig {
         http.formLogin(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
 
-        // 인증 및 권한 예외 처리 (한 곳으로 통합)
+        // 인증 및 권한 예외 처리
+        // 인증(401) 또는 인가(403) 관련 예외가 최종적으로 발생하면 어떻게 처리할지 정의
         http.exceptionHandling(exception -> exception
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 .accessDeniedHandler(jwtAccessDeniedHandler)
         );
-        // 커스텀 보안 필터 관리자 설정
-        http.with(new CustomSecurityFilterManager(jwtTokenProvider, tokenService), CustomSecurityFilterManager::build);
 
-        // 인증 실패 가로채기
-        http.exceptionHandling(exception -> exception
-                .authenticationEntryPoint((request, response, authException) -> {
-                    CustomUtil.fail(response, "login", "로그인을 진행해 주세요", HttpStatus.UNAUTHORIZED);
-                })
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    CustomUtil.fail(response, "login", "권한이 없습니다.", HttpStatus.FORBIDDEN);
-                })
+        // 커스텀 보안 필터 관리자 설정
+        // 들어오는 모든 요청에 대해 JWT를 검사
+        // 1. '인증' 필터 (로그인 처리)
+        JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(authenticationManager, tokenService);
+        // 2. '인가' 필터 (매 요청마다 토큰 검증)
+        JwtAuthorizationFilter jwtAuthorizationFilter = new JwtAuthorizationFilter(jwtTokenProvider);
+
+
+        http.addFilter(jwtAuthenticationFilter); // 기본 UsernamePasswordAuthenticationFilter 위치에 등록
+        http.addFilterBefore(jwtAuthorizationFilter, JwtAuthenticationFilter.class); // 인증 필터보다 먼저 실행되어야 함
+
+
+        // OAuth2 설정
+        http.oauth2Login(oauth2 -> oauth2
+                .successHandler(oAuth2SuccessHandler)
+                .userInfoEndpoint(userInfo -> userInfo
+                        .userService(oAuth2UserService)
+                )
         );
 
         http.authorizeHttpRequests(authorize -> authorize
@@ -120,7 +106,8 @@ public class SecurityConfig {
                         "/api/oauth2/login/google",
                         "/api/image/**",
                         "/api/kftc/**").permitAll()
-                .requestMatchers("/api/auth/**").authenticated());
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated());
 
         return http.build();
     }

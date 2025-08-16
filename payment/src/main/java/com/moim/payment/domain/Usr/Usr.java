@@ -26,7 +26,7 @@ public class Usr { //extends 시간설정 (상속)
     @Column(nullable = false, length = 21, unique = true) //id
     private String usrname;
 
-    @Column(nullable = false, length = 60) //패스워드 인코딩(BCrypt)
+    @Column(nullable = true, length = 60) //패스워드 인코딩(BCrypt)
     private String password;
 
     private String nickname;

@@ -9,15 +9,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@Component
+//@Component
 @RequiredArgsConstructor
 @Log4j2
+@Deprecated
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -30,7 +30,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         log.debug("디버그: JWT 필터 요청 URI: {}", requestUri);
 
         // 로그인 및 회원가입 경로는 JWT 필터를 건너뜁니다.
-        if (requestUri.startsWith("/api/login") || requestUri.startsWith("/api/signup") || requestUri.startsWith("/api/v1/auth/oauth2")) {
+        if (requestUri.startsWith("/api/login")
+                || requestUri.startsWith("/api/signup")
+                || requestUri.startsWith("/login/oauth2")) {
             filterChain.doFilter(request, response);
             return;
         }

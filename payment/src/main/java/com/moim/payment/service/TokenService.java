@@ -5,6 +5,7 @@ import com.moim.payment.domain.RefreshToken;
 import com.moim.payment.domain.Usr.Usr;
 import com.moim.payment.dto.usr.LoginRespDto;
 import com.moim.payment.dto.usr.TokenDTO;
+import com.moim.payment.handler.exception.CustomApiException;
 import com.moim.payment.repository.RefreshTokenRepository;
 import com.moim.payment.repository.UsrRepository;
 import lombok.RequiredArgsConstructor;
@@ -52,25 +53,36 @@ public class TokenService {
     }
 
     public TokenDTO refresh(TokenDTO tokenDTO) {
+        //1. 토큰 유효성 검증
         if(!tokenProvider.validateToken(tokenDTO.getRefreshToken())) {
-            throw new RuntimeException("Refresh Token이 유효하지 않습니다.");
+            throw new CustomApiException("Refresh Token이 유효하지 않습니다.");
         }
 
+        // 2. Access Token에서 사용자명(principal) 추출
         Authentication authentication = tokenProvider.getAuthentication(tokenDTO.getAccessToken());
+        String username = authentication.getName();
 
-        RefreshToken refreshToken = refreshTokenRepository.findByUsr(usrRepository.findByUsrname(authentication.getName()).get())
-                .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
+        // 3. DB에서 사용자 정보와 리프레시 토큰 조회
+        Usr usr = usrRepository.findByUsrname(username)
+                .orElseThrow(() -> new CustomApiException("사용자 정보가 존재하지 않습니다."));
 
+        RefreshToken refreshToken = refreshTokenRepository.findByUsr(usr)
+                .orElseThrow(() -> new CustomApiException("로그아웃 된 사용자입니다."));
+
+        // 4. 요청의 Refresh Token과 DB에 저장된 토큰이 일치하는지 확인
         if (!refreshToken.getToken().equals(tokenDTO.getRefreshToken())) {
-            throw new RuntimeException("Refresh Token이 일치하지 않습니다.");
+            // 토큰이 일치하지 않는 경우, 탈취로 간주하고 DB의 리프레시 토큰을 삭제
+            refreshTokenRepository.delete(refreshToken);
+            throw new CustomApiException("Refresh Token이 일치하지 않습니다. (재로그인 필요)");
         }
 
-        Usr usr = usrRepository.findByUsrname(refreshToken.getUsr().getUsrname()).orElseThrow(() -> new RuntimeException("존재하지 않는 계정입니다."));
-        TokenDTO tokenDto = tokenProvider.createTokenReqDto(usr.getUsrname(), usr.getRole());
+        // 5. 새로운 Access Token과 Refresh Token 발급
+        TokenDTO newTokenDto = tokenProvider.createTokenReqDto(usr.getUsrname(), usr.getRole());
 
-        RefreshToken newRefreshToken = refreshToken.updateValue(tokenDto.getRefreshToken());
-        refreshTokenRepository.save(newRefreshToken);
+        // 6. DB에 저장된 기존 Refresh Token을 새로운 토큰으로 업데이트하고 저장
+        refreshToken.updateValue(newTokenDto.getRefreshToken());
+        refreshTokenRepository.save(refreshToken);
 
-        return tokenDto;
+        return newTokenDto;
     }
 }

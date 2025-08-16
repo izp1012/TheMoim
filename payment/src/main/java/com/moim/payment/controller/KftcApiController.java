@@ -1,6 +1,7 @@
 package com.moim.payment.controller;
 
 import com.moim.payment.dto.kftc.*;
+import com.moim.payment.exception.KftcApiException;
 import com.moim.payment.service.KftcApiService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -166,9 +167,13 @@ public class KftcApiController {
         String accessToken = request.get("accessToken");
         String fintechUseNum = request.get("fintechUseNum");
 
-        if (StringUtils.isBlank(accessToken) || StringUtils.isBlank(fintechUseNum)) {
+        if (StringUtils.isBlank(accessToken)) {
             return ResponseEntity.badRequest()
-                    .body(createErrorResponse("MISSING_PARAMS", "필수 파라미터가 누락되었습니다."));
+                    .body(createErrorResponse("MISSING_TOKEN", "액세스 토큰이 누락되었습니다."));
+        }
+        if (StringUtils.isBlank(fintechUseNum)) {
+            return ResponseEntity.badRequest()
+                    .body(createErrorResponse("MISSING_FINTECH_USE_NUM", "핀테크 이용 번호가 누락되었습니다."));
         }
 
         try {
@@ -181,6 +186,10 @@ public class KftcApiController {
 
             return ResponseEntity.ok(response);
 
+        } catch (KftcApiException e) { // ✅ 수정된 부분: 커스텀 예외를 잡아서 처리
+            log.error("잔액 조회 중 API 오류: status={}, body={}", e.getHttpStatus(), e.getResponseBody());
+            return ResponseEntity.status(e.getHttpStatus())
+                    .body(createErrorResponse(e.getErrorCode(), e.getMessage()));
         } catch (Exception e) {
             log.error("잔액 조회 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

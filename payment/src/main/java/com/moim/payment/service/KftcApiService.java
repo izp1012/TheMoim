@@ -1,6 +1,7 @@
 package com.moim.payment.service;
 
 import com.moim.payment.dto.kftc.*;
+import com.moim.payment.exception.KftcApiException;
 import com.moim.payment.util.CustomUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -84,7 +85,7 @@ public class KftcApiService {
                     .bodyValue(formData)
                     .retrieve()
                     .bodyToMono(KftcTokenResp.class)
-                    .timeout(Duration.ofSeconds(30))
+                    .timeout(Duration.ofSeconds(300))
                     .block();
 
             log.info("Access Token 교환 성공: userSeqNo={}", response != null ? response.getUserSeqNo() : "null");
@@ -92,7 +93,8 @@ public class KftcApiService {
 
         } catch (WebClientResponseException e) {
             log.error("KFTC API 호출 실패: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException("KFTC 토큰 교환 실패: " + e.getMessage());
+            // ✅ 수정된 부분: 커스텀 예외로 상세 정보 전달
+            throw new KftcApiException("KFTC_API_ERROR", "KFTC 토큰 교환 실패: " + e.getResponseBodyAsString(), e.getStatusCode(), e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error("토큰 교환 중 예상치 못한 오류: {}", e.getMessage(), e);
             throw new RuntimeException("토큰 교환 중 오류가 발생했습니다: " + e.getMessage());
@@ -134,7 +136,7 @@ public class KftcApiService {
                                     })
                     )
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .timeout(Duration.ofSeconds(30))
+                    .timeout(Duration.ofSeconds(300))
                     .block();
 
             if (responseBody == null) {
@@ -167,9 +169,8 @@ public class KftcApiService {
         } catch (WebClientResponseException e) {
             log.error("KFTC 잔액 조회 API 호출 실패: status={}, body={}",
                     e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException("잔액 조회 실패: " + e.getMessage());
-
-        } catch (Exception e) {
+            throw new KftcApiException("BALANCE_INQUIRY_ERROR", "잔액 조회 실패: " + e.getResponseBodyAsString(), e.getStatusCode(), e.getResponseBodyAsString());
+        }  catch (Exception e) {
             log.error("잔액 조회 중 예상치 못한 오류: {}", e.getMessage(), e);
             throw new RuntimeException("잔액 조회 실패: " + e.getMessage());
         }
@@ -211,6 +212,8 @@ public class KftcApiService {
 //                    .transactions(transactions)
                     .build();
 
+        } catch (WebClientResponseException e) {
+            throw new KftcApiException("COMPREHENSIVE_ACCOUNT_ERROR", "통합 계좌 정보 조회 실패: " + e.getResponseBodyAsString(), e.getStatusCode(), e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error("통합 계좌 정보 조회 실패: {}", e.getMessage(), e);
             throw new RuntimeException("계좌 정보 조회 실패: " + e.getMessage());
@@ -308,7 +311,7 @@ public class KftcApiService {
                                     })
                     )
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .timeout(Duration.ofSeconds(30))
+                    .timeout(Duration.ofSeconds(300))
                     .block();
 
             if (responseBody == null) {
@@ -387,7 +390,7 @@ public class KftcApiService {
     public TransferRespDto processWithdrawTransfer(String accessToken, TransferReqDto request) {
         log.info("출금이체 API 호출 시작: fintechUseNum={}", request.getFintechUseNum());
 
-        String bankTranId = generateBankTranId("M201");  // 출금이체용 거래고유번호
+        String bankTranId = generateBankTranId("M202501486U");  // 출금이체용 거래고유번호
         String tranDtime = getCurrentTimestamp();
 
         // 요청 바디 구성
@@ -405,7 +408,7 @@ public class KftcApiService {
         requestBody.put("req_client_name", request.getReqClientName());
         requestBody.put("req_client_bank_code", request.getReqClientBankCode());
         requestBody.put("req_client_account_num", request.getReqClientAccountNum());
-        requestBody.put("req_client_num", "HONGKILDONG1234"); // 요청고객회원번호 (고정값 또는 동적 생성)
+        requestBody.put("req_client_num", "M202501486U"); // 요청고객회원번호 (고정값 또는 동적 생성)
         requestBody.put("transfer_purpose", request.getTransferPurpose());
 
         // Body 파라미터들 (하위기관정보 - 선택사항)
@@ -436,7 +439,7 @@ public class KftcApiService {
                                     })
                     )
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .timeout(Duration.ofSeconds(30))
+                    .timeout(Duration.ofSeconds(300))
                     .block();
 
             return mapToTransferResponse(responseBody);
@@ -453,7 +456,7 @@ public class KftcApiService {
     public TransferRespDto processDepositTransfer(String accessToken, TransferReqDto request) {
         log.info("입금이체 API 호출 시작: fintechUseNum={}", request.getFintechUseNum());
 
-        String bankTranId = generateBankTranId("M202");  // 입금이체용 거래고유번호
+        String bankTranId = generateBankTranId("M202501486U");  // 입금이체용 거래고유번호
         String tranDtime = getCurrentTimestamp();
 
         // 요청 바디 구성
@@ -507,7 +510,7 @@ public class KftcApiService {
                                     })
                     )
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .timeout(Duration.ofSeconds(30))
+                    .timeout(Duration.ofSeconds(300))
                     .block();
 
             return mapToTransferResponse(responseBody);

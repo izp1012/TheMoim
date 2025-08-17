@@ -4,6 +4,7 @@ import com.moim.payment.config.auth.LoginUsr;
 import com.moim.payment.domain.Usr.UserRole;
 import com.moim.payment.domain.Usr.Usr;
 import com.moim.payment.dto.usr.*;
+import com.moim.payment.exception.CustomApiException;
 import com.moim.payment.exception.ResourceNotFoundException;
 import com.moim.payment.repository.UsrRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -33,28 +34,31 @@ public class UsrService implements UserDetailsService {
     //서비스는 DTO로 요청받고 DTO로 응답한다.
     @Transactional //트랜잭션이 메서드 시작할때, 시작되고, 종료될 때 함께 종료
     public SignUpRespDto signup(SignUpReqDto signUpReqDto) {
-        // 1. 동일 유저네임 존재 검사
-        if (usrRepository.existsByUsrname(signUpReqDto.getUsrname())) {
-            throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
-        }
-        if (usrRepository.existsByEmail(signUpReqDto.getEmail())) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+
+        if(signUpReqDto.getPassword().isEmpty()) {
+            throw new CustomApiException("패스워드를 입력하시오.");
         }
 
-        // 2. 패스워드 인코딩 - 회원가입
+        if (usrRepository.existsByUsrname(signUpReqDto.getUsrname())) {
+            throw new CustomApiException("이미 사용 중인 아이디입니다.");
+        }
+
+        if (usrRepository.existsByEmail(signUpReqDto.getEmail())) {
+            throw new CustomApiException("이미 사용 중인 이메일입니다.");
+        }
+
         Usr usr = usrRepository.save(signUpReqDto.toEntity(passwordEncoder));
         usr.updateRole(UserRole.USER);
 
-        // 3. dto 응답
         return new SignUpRespDto(usr);
     }
 
     public TokenDTO login(LoginReqDto loginReqDto) {
         Usr usr = usrRepository.findByUsrname(loginReqDto.getUsrname()) // username으로만 조회
-                .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomApiException("아이디를 찾을 수 없습니다."));
 
         if(!passwordEncoder.matches(loginReqDto.getPassword(), usr.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다");
+            throw new CustomApiException("비밀번호가 일치하지 않습니다");
         }
 
         //JWT 생성
@@ -71,7 +75,7 @@ public class UsrService implements UserDetailsService {
 
     public Usr findUserbyUsername(String usrname) {
         Optional<Usr> usrOptional = Optional.ofNullable(usrRepository.findByUsrname(usrname)
-                .orElseThrow(() -> new IllegalArgumentException("User not found for usrname: " + usrname)));
+                .orElseThrow(() -> new CustomApiException("User not found for usrname: " + usrname)));
 
         return usrOptional.get();
     }
@@ -107,7 +111,7 @@ public class UsrService implements UserDetailsService {
     public UserDetails loadUserByUsername(String usrName) throws UsernameNotFoundException {
         log.debug("사용자 로드 시도 : "+usrName);
         Usr userPS =usrRepository.findByUsrname(usrName)
-                .orElseThrow(() -> new UsernameNotFoundException("userName: " + usrName + "를 데이터베이스에서 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("userName: " + usrName + "를 찾을 수 없습니다."));
         return new LoginUsr(userPS);
     }
 

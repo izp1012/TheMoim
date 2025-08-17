@@ -1,8 +1,8 @@
 package com.moim.payment.controller;
 
 import com.moim.payment.domain.Payment;
-import com.moim.payment.dto.PaymentReq;
-import com.moim.payment.dto.PaymentResp;
+import com.moim.payment.dto.PaymentReqDTO;
+import com.moim.payment.dto.PaymentRespDTO;
 import com.moim.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +18,13 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping
-    public ResponseEntity<PaymentResp> create(@RequestBody PaymentReq request) {
-        return ResponseEntity.ok(paymentService.createPayment(request));
+    public ResponseEntity<PaymentRespDTO> addPayMent(@RequestBody PaymentReqDTO request) {
+        return ResponseEntity.ok(paymentService.addPayment(request));
     }
 
-    @GetMapping("/group/{groupId}")
-    public ResponseEntity<List<PaymentResp>> getByGroup(@PathVariable Long groupId) {
-        return ResponseEntity.ok(paymentService.getPaymentsByGroup(groupId));
+    @GetMapping("/group/{moidId}")
+    public ResponseEntity<List<PaymentRespDTO>> getByMoim(@PathVariable Long moidId) {
+        return ResponseEntity.ok(paymentService.getPaymentsByMoimId(moidId));
     }
 
     @PostMapping("/payments")

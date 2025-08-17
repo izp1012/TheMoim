@@ -2,59 +2,56 @@ package com.moim.payment.service;
 
 import com.moim.payment.domain.Moim;
 import com.moim.payment.domain.Payment;
-import com.moim.payment.domain.UsrMoim;
-import com.moim.payment.dto.PaymentReq;
-import com.moim.payment.dto.PaymentResp;
+import com.moim.payment.domain.UsrGroupMember; // 추가
+import com.moim.payment.dto.PaymentReqDTO;
+import com.moim.payment.dto.PaymentRespDTO;
 import com.moim.payment.repository.MoimRepository;
-import com.moim.payment.repository.UsrMoimRepository;
 import com.moim.payment.repository.PaymentRepository;
+import com.moim.payment.repository.UsrGroupMemberRepository; // 추가
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PaymentService {
     private final PaymentRepository paymentRepository;
-    private final MoimRepository MoimRepository;
+    private final MoimRepository moimRepository;
+    private final UsrGroupMemberRepository usrGroupMemberRepository; // UsrRepository 대신 UsrGroupMemberRepository 사용
 
-    public PaymentResp createPayment(PaymentReq request) {
-        Moim moim = MoimRepository.findById(request.getGroupId())
-                .orElseThrow(() -> new IllegalArgumentException("Moim not found"));
+    @Transactional
+    public PaymentRespDTO addPayment(PaymentReqDTO request) {
+        Moim moim = moimRepository.findById(request.getMoimId())
+                .orElseThrow(() -> new IllegalArgumentException("모임을 찾을 수 없습니다: " + request.getMoimId()));
+
+        UsrGroupMember payerMember = usrGroupMemberRepository.findById(request.getPayerMemberId())
+                .orElseThrow(() -> new IllegalArgumentException("결제한 회원을 찾을 수 없습니다: " + request.getPayerMemberId()));
 
         Payment payment = Payment.builder()
-                .payer(request.getPayer())
-                .amount(request.getAmount())
-                .paidAt(LocalDateTime.now())
                 .moim(moim)
+                .payer(payerMember) // UsrGroupMember 엔티티를 직접 설정
+                .amount(request.getAmount())
+                .description(request.getDescription())
+                .paymentDate(request.getPaymentDate())
                 .build();
 
         Payment saved = paymentRepository.save(payment);
 
-        return PaymentResp.builder()
-                .id(saved.getId())
-                .payerName(saved.getPayer().getUsrname())
-                .amount(saved.getAmount())
-                .paidAt(saved.getPaidAt())
-//                .groupId(saved.getUsrMoim().getId())
-                .build();
+        return new PaymentRespDTO(saved);
     }
 
-    public List<PaymentResp> getPaymentsByGroup(Long groupId) {
-        List<Payment> payments = paymentRepository.findAll();
+    public List<PaymentRespDTO> getPaymentsByMoimId(Long moimId) {
+        Moim moim = moimRepository.findById(moimId)
+                .orElseThrow(() -> new IllegalArgumentException("모임을 찾을 수 없습니다: " + moimId));
+
+        List<Payment> payments = paymentRepository.findByMoimId(moimId);
+
         return payments.stream()
-                .filter(p -> p.getMoim().getId().equals(groupId))
-                .map(p -> PaymentResp.builder()
-                        .id(p.getId())
-                        .payerName(p.getPayer().getUsrname())
-                        .amount(p.getAmount())
-                        .paidAt(p.getPaidAt())
-                        .groupId(p.getMoim().getId())
-                        .build())
+                .map(PaymentRespDTO::new)
                 .collect(Collectors.toList());
     }
 }
-

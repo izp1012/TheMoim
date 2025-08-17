@@ -3,6 +3,7 @@ package com.moim.payment.domain;
 import com.moim.payment.domain.Usr.Usr;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -10,37 +11,36 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@NoArgsConstructor
+@Table(name = "payment")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Getter
 @Builder
-@EntityListeners(AuditingEntityListener.class)
 public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 결제자를 UsrGroupMember와 연결하여 유연성 확보
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usr_id")
-    private Usr payer;
+    @JoinColumn(name = "usr_group_member_id")
+    private UsrGroupMember payer;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "moim_id")
     private Moim moim;
 
     @Column(nullable = false)
-    private String description; // 지불 내용 (예: 저녁 식사비, 회비 납부)
+    private String description;
 
     @Column(nullable = false)
-    private int amount; //금액
+    private double amount;
 
     @Column(nullable = false)
-    private LocalDate paymentDate; // 지불 일자
+    private LocalDate paymentDate;
 
-    @CreatedDate
+    // @CreatedDate 대신 @CreationTimestamp 사용
+    @CreationTimestamp
     private LocalDateTime paidAt;
-
-//    public void setUsrMoim(UsrMoim usrMoim) {
-//        this.usrMoim = usrMoim;
-//    }
 }
+

@@ -1,8 +1,6 @@
 package com.moim.payment.controller;
 
-import com.moim.payment.dto.MoimInviteReqDTO;
-import com.moim.payment.dto.MoimReqDTO;
-import com.moim.payment.dto.MoimRespDTO;
+import com.moim.payment.dto.*;
 import com.moim.payment.service.MoimService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +68,43 @@ public class MoimController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage()); // 이미 초대됨
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("초대 이메일 발송에 실패했습니다: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 4. 특정 모임에 회원을 추가합니다.
+     * 엔드포인트: POST /api/v1/moims/{moimId}/members
+     * @param moimId 모임 ID
+     * @param memberReqDTO 회원 정보 DTO
+     * @return 생성된 회원 응답 DTO
+     */
+    @PostMapping("/{moimId}/members")
+    public ResponseEntity<MemberRespDTO> addMemberToMoim(@PathVariable Long moimId, @Valid @RequestBody MemberReqDTO memberReqDTO) {
+        try {
+            MemberRespDTO newMember = moimService.addMemberToMoim(moimId, memberReqDTO);
+            return ResponseEntity.status(HttpStatus.CREATED).body(newMember);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    /**
+     * 5. 특정 모임의 모든 회원 목록을 조회합니다.
+     * 엔드포인트: GET /api/v1/moims/{moimId}/members
+     * @param moimId 모임 ID
+     * @return 회원 목록 응답 DTO 리스트
+     */
+    @GetMapping("/{moimId}/members")
+    public ResponseEntity<List<MemberRespDTO>> getMembersByMoim(@PathVariable Long moimId) {
+        try {
+            List<MemberRespDTO> members = moimService.getMembersByMoimId(moimId);
+            return ResponseEntity.ok(members);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 }

@@ -33,7 +33,8 @@ public class TokenService {
     }
 
     private TokenDTO createAndSaveToken(Usr usr) {
-        TokenDTO tokenDTO = tokenProvider.createTokenReqDto(usr.getUsrname(), usr.getRole());
+        LoginRespDto loginRespDto = new LoginRespDto(usr);
+        TokenDTO tokenDTO = tokenProvider.createTokenReqDto(loginRespDto);
 
         Optional<RefreshToken> existingRefreshToken = refreshTokenRepository.findByUsr(usr);
 
@@ -76,8 +77,10 @@ public class TokenService {
             throw new CustomApiException("Refresh Token이 일치하지 않습니다. (재로그인 필요)");
         }
 
+        LoginRespDto loginRespDto = new LoginRespDto(usr);
+
         // 5. 새로운 Access Token과 Refresh Token 발급
-        TokenDTO newTokenDto = tokenProvider.createTokenReqDto(usr.getUsrname(), usr.getRole());
+        TokenDTO newTokenDto = tokenProvider.createTokenReqDto(loginRespDto);
 
         // 6. DB에 저장된 기존 Refresh Token을 새로운 토큰으로 업데이트하고 저장
         refreshToken.updateValue(newTokenDto.getRefreshToken());

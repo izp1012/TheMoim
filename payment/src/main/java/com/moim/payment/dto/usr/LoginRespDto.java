@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class LoginRespDto {
-    private String usrId;
+    private Long usrId;
     private String usrname;
     private String email;
     private String loginAt;
@@ -18,6 +18,7 @@ public class LoginRespDto {
     private UserRole role;
 
     public LoginRespDto(Usr usr) {
+        this.usrId = usr.getId();
         this.usrname = usr.getUsrname();
         this.email = usr.getEmail();
         this.loginAt = CustomDateUtil.toStringFormat(usr.getCreatedAt());
@@ -26,6 +27,7 @@ public class LoginRespDto {
     }
 
     public LoginRespDto(Usr usr, String jwtToken) {
+        this.usrId = usr.getId();
         this.usrname = usr.getUsrname();
         this.email = usr.getEmail();
         this.loginAt = CustomDateUtil.toStringFormat(usr.getCreatedAt());

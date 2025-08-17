@@ -1,6 +1,7 @@
 package com.moim.payment.config.auth;//package com.moim.payment.config.auth;
 
 import com.moim.payment.domain.Usr.UserRole;
+import com.moim.payment.dto.usr.LoginRespDto;
 import com.moim.payment.dto.usr.TokenDTO;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -40,11 +41,10 @@ public class JwtTokenProvider {
 
     /**
      * accessToken과 refreshToken을 생성함
-     * @param subject usrname
-     * @return TokenDTO
+     * @param subject loginRespDto
      * subject는 Form Login방식의 경우 userId, Social Login방식의 경우 email
      */
-    public TokenDTO createTokenReqDto(String subject, UserRole role) {
+    public TokenDTO createTokenReqDto(LoginRespDto loginRespDto) {
 
         Instant now = Instant.from(OffsetDateTime.now());
 
@@ -55,13 +55,13 @@ public class JwtTokenProvider {
 
         //accessToken 생성
         String accessToken = Jwts.builder()
-                .subject(subject)
-                .claim("roles", role.name())
+                .subject(loginRespDto.getUsrname())
+                .claim("id", loginRespDto.getUsrId())
+                .claim("roles", loginRespDto.getRole())
                 .expiration(Date.from(accessTokenExpirationDate))
                 .signWith(key)
                 .compact();
-        log.debug("디버그: Access Token 생성됨 (Subject: {}, Role: {}, Expires: {})", subject, role.name(), accessTokenExpirationDate);
-
+        log.debug("디버그: Access Token 생성됨 (Subject: {}, ID: {}, Role: {}, Expires: {})", loginRespDto.getUsrname(), loginRespDto.getUsrId(), loginRespDto.getRole(), accessTokenExpirationDate);
 
         //refreshToken 생성
         String refreshToken = Jwts.builder()

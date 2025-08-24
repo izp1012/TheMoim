@@ -4,6 +4,7 @@ import com.moim.payment.config.auth.LoginUsr;
 import com.moim.payment.domain.Usr.Usr;
 import com.moim.payment.dto.ResponseDto;
 import com.moim.payment.dto.usr.*;
+import com.moim.payment.exception.CustomApiException;
 import com.moim.payment.service.UsrService;
 import com.moim.payment.util.CustomDateUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,9 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,29 +34,30 @@ public class UsrController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(HttpServletResponse response, @RequestBody @Valid LoginReqDto loginReqDto){
-        TokenDTO tokenDTO = usrService.login(loginReqDto);
+        try {
+            TokenDTO tokenDTO = usrService.login(loginReqDto);
 
-        Usr usr = usrService.findUserbyUsername(loginReqDto.getUsrname());
-        LoginRespDto loginRespDto = new LoginRespDto(usr);
+            Usr usr = usrService.findUserbyUsername(loginReqDto.getUsrname());
+            LoginRespDto loginRespDto = new LoginRespDto(usr);
 
-        ResponseCookie responseCookie = ResponseCookie
-                .from("refresh_token", tokenDTO.getRefreshToken())
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("None")
-                .maxAge(tokenDTO.getDuration())
-                .path("/")
-                .build();
+            ResponseCookie responseCookie = ResponseCookie
+                    .from("refresh_token", tokenDTO.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(true)
+                    .sameSite("None")
+                    .maxAge(tokenDTO.getDuration())
+                    .path("/")
+                    .build();
 
-        response.addHeader("Set-Cookie", responseCookie.toString()); // Set-Cookie 헤더에 쿠키 추가
-        TokenRespDto tokenResponseDTO = TokenRespDto.builder()
-                .isNewMember(false)
-                .accessToken(tokenDTO.getAccessToken())
-                .build();
+            response.addHeader("Set-Cookie", responseCookie.toString()); // Set-Cookie 헤더에 쿠키 추가
 
-        loginRespDto.setJwtToken(tokenDTO.getAccessToken());
+            loginRespDto.setJwtToken(tokenDTO.getAccessToken());
 
-        return new ResponseEntity<>(new ResponseDto<>(1, "로그인 성공", CustomDateUtil.toStringFormat(LocalDateTime.now()), loginRespDto), HttpStatus.OK);
+            return new ResponseEntity<>(new ResponseDto<>(1, "로그인 성공", CustomDateUtil.toStringFormat(LocalDateTime.now()), loginRespDto), HttpStatus.OK);
+        } catch (CustomApiException e){
+            log.error(e.getMessage(), e);
+            return new ResponseEntity<>(new ResponseDto<>(-1, e.getMessage(), CustomDateUtil.toStringFormat(LocalDateTime.now()), null), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping("/auth/get-current-member")

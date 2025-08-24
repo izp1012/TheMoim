@@ -1,7 +1,7 @@
 package com.moim.payment.domain.Usr;
 
 public enum Provider {
-    GOOGLE("google");
+    GOOGLE("google"),KAKAO("kakao");
 
     private final String provider;
 
@@ -13,6 +13,8 @@ public enum Provider {
         switch (provider) {
             case "google" :
                 return Provider.GOOGLE;
+            case "kakao" :
+                return Provider.KAKAO;
             default:
                 return null;
         }

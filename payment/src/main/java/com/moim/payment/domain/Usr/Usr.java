@@ -15,7 +15,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "usr_tb")
+@Table(name = "usr_tb", uniqueConstraints = {
+@UniqueConstraint(
+        name="NAME_EMAIL_UNIQUE",
+        columnNames={"USRNAME","EMAIL"}
+)})
 @Entity
 @DynamicUpdate
 public class Usr { //extends 시간설정 (상속)
@@ -33,7 +37,7 @@ public class Usr { //extends 시간설정 (상속)
 
     private LocalDate birth;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String email;
 
     @Column
@@ -46,13 +50,14 @@ public class Usr { //extends 시간설정 (상속)
     @Enumerated(EnumType.STRING)
     private Provider provider;
 
+    private String picture;
     private String zipcode;
     private String street;
     private String addressDetail;
     private String phoneNo;
 
     @CreatedDate //Insert
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate //Insert, Update
@@ -60,19 +65,21 @@ public class Usr { //extends 시간설정 (상속)
     private LocalDateTime updatedAt;
 
     @Builder
-    public Usr(String usrname, String password, String email, UserRole role, boolean social, Provider provider, LocalDateTime createdAt){
+    public Usr(String usrname, String password, String email, UserRole role, boolean social, String picture, Provider provider, LocalDateTime createdAt){
         this.usrname = usrname;
         this.password = password;
         this.email = email;
         this.role = role;
         this.social = social;
+        this.picture = picture;
         this.provider = provider;
         this.createdAt = createdAt;
     }
 
-    public Usr updateUser(String username, String email) {
+    public Usr updateUser(String username, String email, String picture) {
         this.usrname = username;
         this.email = email;
+        this.picture = picture;
 
         return this;
     }

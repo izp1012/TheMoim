@@ -75,6 +75,35 @@ public class SecurityConfig {
                 .accessDeniedHandler(jwtAccessDeniedHandler)
         );
 
+        http.authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/v3/api-docs/**", // OpenAPI JSON
+                        "/api-docs/**",
+                        "/swagger-ui/**",    // Swagger UI
+                        "/swagger-ui.html",
+                        "/oauth2/**",
+                        "/login/**",
+                        "/api/login/**",
+                        "/api/signup/**",
+                        "/api/image/**",
+                        "/api/kftc/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated());
+
+
+        // OAuth2 설정
+        http.oauth2Login(oauth2 -> oauth2
+                .successHandler(oAuth2SuccessHandler)
+                .authorizationEndpoint(authorization -> authorization
+                        .baseUri("/oauth2/authorization")  // 기본값: /oauth2/authorization/{registrationId}
+                )
+                .redirectionEndpoint(redirection  -> redirection
+                        .baseUri("/login/oauth2/code/*")
+                )
+                .userInfoEndpoint(userInfo -> userInfo
+                        .userService(oAuth2UserService)
+                )
+        );
+
         // 커스텀 보안 필터 관리자 설정
         // 들어오는 모든 요청에 대해 JWT를 검사
         // 1. '인증' 필터 (로그인 처리)
@@ -82,32 +111,8 @@ public class SecurityConfig {
         // 2. '인가' 필터 (매 요청마다 토큰 검증)
         JwtAuthorizationFilter jwtAuthorizationFilter = new JwtAuthorizationFilter(jwtTokenProvider);
 
-
         http.addFilter(jwtAuthenticationFilter); // 기본 UsernamePasswordAuthenticationFilter 위치에 등록
         http.addFilterBefore(jwtAuthorizationFilter, JwtAuthenticationFilter.class); // 인증 필터보다 먼저 실행되어야 함
-
-
-        // OAuth2 설정
-        http.oauth2Login(oauth2 -> oauth2
-                .successHandler(oAuth2SuccessHandler)
-                .userInfoEndpoint(userInfo -> userInfo
-                        .userService(oAuth2UserService)
-                )
-        );
-
-        http.authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/v3/api-docs/**", // OpenAPI JSON
-                        "/api-docs/**",
-                        "/swagger-ui/**",    // Swagger UI
-                        "/swagger-ui.html",
-                        "/api/login/**",
-                        "/api/signup/**",
-                        "/api/oauth2/**",
-                        "/api/oauth2/login/google",
-                        "/api/image/**",
-                        "/api/kftc/**").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated());
 
         return http.build();
     }

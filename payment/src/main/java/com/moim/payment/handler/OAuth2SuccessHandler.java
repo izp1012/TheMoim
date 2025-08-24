@@ -1,5 +1,6 @@
 package com.moim.payment.handler;
 
+import com.moim.payment.config.auth.LoginUsr;
 import com.moim.payment.domain.Usr.Usr;
 import com.moim.payment.dto.usr.TokenDTO;
 import com.moim.payment.repository.UsrRepository;
@@ -33,8 +34,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
 
         // 1. UserService에서 처리 완료된 사용자 정보 가져오기
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        String email = oAuth2User.getAttribute("email");
+        LoginUsr loginUser = (LoginUsr) authentication.getPrincipal();
+        String email = loginUser.getUsr().getEmail();
         // 2. DB에서 최신 정보를 다시 조회.
         Usr usr = usrRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("OAuth2 인증 후 사용자를 찾을 수 없습니다."));
